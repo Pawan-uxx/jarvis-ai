@@ -1,0 +1,167 @@
+
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#07111f">
+<title>JARVIS AI</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#07111f;color:#fff;font-family:Arial,sans-serif}
+header{padding:20px;text-align:center;background:#101e32;border-bottom:1px solid #29415e}
+header h1{margin:0;color:#42d9ff;letter-spacing:4px}
+header p{color:#a9bfd3;margin:7px 0 0}
+#chat{height:65vh;overflow:auto;padding:15px}
+.msg{padding:12px 15px;margin:10px 0;border-radius:14px;max-width:88%;line-height:1.5;white-space:pre-wrap}
+.bot{background:#142c45;border:1px solid #24516d}
+.user{background:#075b75;margin-left:auto}
+.controls{position:fixed;bottom:0;left:0;right:0;background:#101e32;padding:12px;display:flex;gap:8px;flex-wrap:wrap}
+input{flex:1;min-width:150px;padding:14px;border-radius:10px;border:1px solid #42617d;background:#07111f;color:white;font-size:16px}
+button{padding:12px 15px;border:0;border-radius:10px;background:#087fa6;color:white;font-weight:bold}
+button:active{opacity:.7}
+.small{font-size:12px;color:#a9bfd3;text-align:center;padding:5px}
+</style>
+</head>
+<body>
+<header>
+<h1>J.A.R.V.I.S</h1>
+<p>Personal Voice Assistant</p>
+<div class="small">मालिक, मैं आपकी सहायता के लिए तैयार हूँ।</div>
+</header>
+
+<div id="chat">
+<div class="msg bot">जी मालिक, बताइए। मैं आपकी क्या सहायता कर सकता हूँ?</div>
+</div>
+
+<div class="controls">
+<input id="question" placeholder="मालिक, अपना सवाल लिखें..." autocomplete="off">
+<button onclick="send()">भेजें</button>
+<button onclick="listen()">🎙️</button>
+<button onclick="speakToggle()" id="voiceBtn">🔊 आवाज चालू</button>
+<button onclick="clearChat()">हिस्ट्री मिटाएँ</button>
+</div>
+
+<script>
+const chat=document.getElementById("chat");
+const input=document.getElementById("question");
+let voiceOn=true;
+
+function addMessage(text,type){
+ const d=document.createElement("div");
+ d.className="msg "+type;
+ d.textContent=text;
+ chat.appendChild(d);
+ chat.scrollTop=chat.scrollHeight;
+}
+
+function saveHistory(){
+ localStorage.setItem("jarvis_history",chat.innerHTML);
+}
+
+function loadHistory(){
+ const old=localStorage.getItem("jarvis_history");
+ if(old) chat.innerHTML=old;
+}
+
+function speakToggle(){
+ voiceOn=!voiceOn;
+ document.getElementById("voiceBtn").textContent=
+ voiceOn?"🔊 आवाज चालू":"🔇 आवाज बंद";
+}
+
+function say(text){
+ if(!voiceOn || !("speechSynthesis" in window)) return;
+ speechSynthesis.cancel();
+ const u=new SpeechSynthesisUtterance(text);
+ u.lang="hi-IN";
+ u.rate=0.95;
+ speechSynthesis.speak(u);
+}
+
+function answer(q){
+ let s=q.toLowerCase().trim();
+
+ if(s.includes("नमस्ते") || s.includes("हेलो") || s.includes("hello") || s.includes("hi"))
+ return "नमस्ते मालिक! बताइए, मैं आपकी क्या मदद करूँ?";
+
+ if(s.includes("तुम्हारा नाम") || s.includes("तुम कौन"))
+ return "मालिक, मेरा नाम JARVIS है। मैं आपका निजी सहायक हूँ।";
+
+ if(s.includes("समय") || s.includes("टाइम"))
+ return "मालिक, अभी समय है "+new Date().toLocaleTimeString("hi-IN");
+
+ if(s.includes("तारीख") || s.includes("दिनांक"))
+ return "आज की तारीख है "+new Date().toLocaleDateString("hi-IN");
+
+ if(s.includes("कैसे हो") || s.includes("कैसा है"))
+ return "मैं बढ़िया हूँ मालिक! आपकी सेवा के लिए तैयार हूँ।";
+
+ if(s.includes("धन्यवाद") || s.includes("शुक्रिया"))
+ return "आपका स्वागत है मालिक!";
+
+ if(s.includes("मदद") || s.includes("help"))
+ return "मालिक, आप मुझसे समय, तारीख, सामान्य जानकारी और बातचीत से जुड़े सवाल पूछ सकते हैं।";
+
+ if(s.includes("भारत की राजधानी") || s.includes("capital of india"))
+ return "भारत की राजधानी नई दिल्ली है।";
+
+ if(s.includes("उत्तर प्रदेश की राजधानी"))
+ return "उत्तर प्रदेश की राजधानी लखनऊ है।";
+
+ if(s.includes("कन्नौज"))
+ return "कन्नौज उत्तर प्रदेश का एक ऐतिहासिक शहर है, जो इत्र के लिए प्रसिद्ध है।";
+
+ if(s.includes("जार्विस") || s.includes("jarvis"))
+ return "जी मालिक, मैं सुन रहा हूँ। बताइए।";
+
+ return "जी मालिक, आपका सवाल मैंने समझने की कोशिश की, लेकिन अभी मेरे पास सीमित जानकारी है। मेरा AI दिमाग जोड़ने के बाद मैं बेहतर जवाब दे सकूँगा।";
+}
+
+function send(){
+ let q=input.value.trim();
+ if(!q)return;
+ addMessage(q,"user");
+ input.value="";
+ let a=answer(q);
+ setTimeout(()=>{
+ addMessage(a,"bot");
+ say(a);
+ saveHistory();
+ },300);
+ saveHistory();
+}
+
+input.addEventListener("keydown",e=>{
+ if(e.key==="Enter")send();
+});
+
+function listen(){
+ const SR=window.SpeechRecognition || window.webkitSpeechRecognition;
+ if(!SR){
+ alert("मालिक, इस ब्राउज़र में Voice Recognition उपलब्ध नहीं है। Chrome में प्रयास करें।");
+ return;
+ }
+ const r=new SR();
+ r.lang="hi-IN";
+ r.continuous=false;
+ r.interimResults=false;
+ r.onresult=e=>{
+ input.value=e.results[0][0].transcript;
+ send();
+ };
+ r.onerror=()=>alert("माइक्रोफोन की अनुमति जाँचें और दोबारा प्रयास करें।");
+ r.start();
+}
+
+function clearChat(){
+ if(confirm("मालिक, क्या आप पूरी बातचीत मिटाना चाहते हैं?")){
+ localStorage.removeItem("jarvis_history");
+ chat.innerHTML='<div class="msg bot">जी मालिक, बताइए।</div>';
+ }
+}
+
+loadHistory();
+</script>
+</body>
+</html>
